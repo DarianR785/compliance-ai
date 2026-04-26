@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --void:       #050B1A;
+  --midnight:   #0A1628;
+  --navy:       #0F1E35;
+  --steel:      #1B3151;
+  --muted:      #2A4060;
+
+  /* Accents */
+  --emerald:    #10B981;
+  --emerald-dim:#065F46;
+  --trace:      #2EB4FF;
+  --trace-dim:  #0A3A5C;
+
+  /* Status */
+  --required:   #EF4444;
+  --pending:    #F59E0B;
+  --compliant:  #10B981;
+
+  /* Typography */
+  --paper:      #E8F0FA;
+  --mute-text:  #8DA3BF;
+  --faint:      #4A5F7E;
+
+  /* Spacing (4px base) */
+  --sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;
+  --sp-4: 16px;  --sp-6: 24px;  --sp-8: 32px;
+  --sp-12: 48px; --sp-16: 64px; --sp-24: 96px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-micro: 120ms;
+  --dur-std:   240ms;
+  --dur-slow:  480ms;
+}
+
+@theme inline {
+  --color-void:       var(--void);
+  --color-midnight:   var(--midnight);
+  --color-navy:       var(--navy);
+  --color-steel:      var(--steel);
+  --color-muted:      var(--muted);
+  --color-emerald:    var(--emerald);
+  --color-trace:      var(--trace);
+  --color-paper:      var(--paper);
+  --color-mute-text:  var(--mute-text);
+  --color-faint:      var(--faint);
+  --color-required:   var(--required);
+  --color-pending:    var(--pending);
+  --color-compliant:  var(--compliant);
+  --font-sans:        var(--font-manrope);
+  --font-mono:        var(--font-jetbrains);
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────────── */
+html {
+  background: var(--void);
+  color: var(--paper);
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--void);
+  min-height: 100vh;
+}
+
+/* ─── Custom Scrollbar ───────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--midnight); }
+::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ─── Selection ─────────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(16, 185, 129, 0.25);
+  color: var(--paper);
+}
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--emerald);
+  outline-offset: 2px;
+}
+
+/* ─── Typography helpers ─────────────────────────────────────────────────────── */
+.mono-label {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.display-heading {
+  font-family: var(--font-jetbrains), monospace;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* ─── Grid background ────────────────────────────────────────────────────────── */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle, var(--steel) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.045;
+}
+
+/* ─── Compliance Frame ───────────────────────────────────────────────────────── */
+.cf-frame {
+  position: relative;
+}
+.cf-frame::before,
+.cf-frame::after,
+.cf-frame > .cf-br::before,
+.cf-frame > .cf-br::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--steel);
+  border-style: solid;
+  transition: border-color var(--dur-std) var(--ease-out),
+              width var(--dur-std) var(--ease-out),
+              height var(--dur-std) var(--ease-out);
+}
+.cf-frame::before  { top: 0; left: 0;  border-width: 1px 0 0 1px; }
+.cf-frame::after   { top: 0; right: 0; border-width: 1px 1px 0 0; }
+.cf-frame > .cf-br { position: absolute; inset: 0; pointer-events: none; }
+.cf-frame > .cf-br::before { bottom: 0; left: 0;  border-width: 0 0 1px 1px; }
+.cf-frame > .cf-br::after  { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+.cf-frame.cf-emerald::before,
+.cf-frame.cf-emerald::after,
+.cf-frame.cf-emerald > .cf-br::before,
+.cf-frame.cf-emerald > .cf-br::after {
+  border-color: var(--emerald);
+}
+.cf-frame.cf-trace::before,
+.cf-frame.cf-trace::after,
+.cf-frame.cf-trace > .cf-br::before,
+.cf-frame.cf-trace > .cf-br::after {
+  border-color: var(--trace);
+}
+
+/* ─── Print styles ───────────────────────────────────────────────────────────── */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; color: black !important; }
+  .print-page { page-break-after: always; }
+}
