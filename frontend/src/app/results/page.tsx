@@ -6,26 +6,51 @@ import Navbar from "@/components/layout/Navbar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CategoryChip from "@/components/ui/CategoryChip";
 import type { AnalyzeResponse, ChecklistItem } from "@/lib/types";
-import { MOCK_PROFILES } from "@/lib/mock-data";
 
 type Category = "all" | "permits" | "licenses" | "inspections" | "zoning";
-
 const CATEGORIES: Category[] = ["all", "permits", "licenses", "inspections", "zoning"];
-
 const PRIORITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
+const STORAGE_KEY = "compliance_checked_items";
+
+function getCheckedKey(resultId: string) {
+  return `${STORAGE_KEY}_${resultId}`;
+}
 
 export default function ResultsPage() {
   const router = useRouter();
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  const [resultId, setResultId] = useState("");
   const [activeCategory, setActiveCategory] = useState<Category>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [checked, setChecked] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("compliance_result");
     if (!raw) { router.push("/check"); return; }
-    try { setResult(JSON.parse(raw)); } catch { router.push("/check"); }
+    try {
+      const parsed: AnalyzeResponse = JSON.parse(raw);
+      // Stable ID from business type + location
+      const nameSlug = parsed.business_name ? `_${parsed.business_name}` : "";
+      const id = `${parsed.business_type}${nameSlug}_${parsed.location}`.replace(/\s+/g, "_").toLowerCase();
+      setResult(parsed);
+      setResultId(id);
+      // Load persisted checked state
+      const savedChecked = localStorage.getItem(getCheckedKey(id));
+      if (savedChecked) setChecked(new Set(JSON.parse(savedChecked)));
+    } catch { router.push("/check"); }
   }, [router]);
+
+  function toggleChecked(itemId: string) {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      // Persist to localStorage so it survives page refresh
+      localStorage.setItem(getCheckedKey(resultId), JSON.stringify([...next]));
+      return next;
+    });
+  }
 
   if (!result) return null;
 
@@ -36,22 +61,26 @@ export default function ResultsPage() {
     ? sorted
     : sorted.filter((i) => i.category === activeCategory);
 
-  const counts = {
-    required:  result.checklist.filter((i) => i.status === "required").length,
-    pending:   result.checklist.filter((i) => i.status === "pending").length,
-    compliant: result.checklist.filter((i) => i.status === "compliant").length,
+  const doneCount = checked.size;
+  const totalCount = result.checklist.length;
+  const progressPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+  const statusCounts = {
+    required:  result.checklist.filter((i) => i.status === "required" && !checked.has(i.id)).length,
+    pending:   result.checklist.filter((i) => i.status === "pending"  && !checked.has(i.id)).length,
+    compliant: result.checklist.filter((i) => i.status === "compliant").length + doneCount,
   };
 
   function handleSave() {
     const existing = JSON.parse(localStorage.getItem("compliance_profiles") || "[]");
     const profile = {
       id: `profile-${Date.now()}`,
-      businessName: result!.business_label,
+      businessName: result!.business_name,
       businessType: result!.business_type,
       businessLabel: result!.business_label,
       location: result!.location,
       savedAt: new Date().toISOString().split("T")[0],
-      itemCounts: counts,
+      itemCounts: statusCounts,
       data: result,
     };
     localStorage.setItem(
@@ -65,22 +94,27 @@ export default function ResultsPage() {
     <div className="relative z-10 flex flex-col min-h-screen">
       <Navbar />
 
-      {/* Mock banner */}
       {result.mock && (
         <div className="bg-[var(--pending)]/10 border-b border-[var(--pending)]/30 px-6 py-2 no-print">
           <p className="mono-label text-[10px] text-[var(--pending)] text-center">
-            [DEMO DATA] — FastAPI backend not connected. Showing sample restaurant checklist.
+            [DEMO DATA] — FastAPI backend not connected. Start with: <code>uvicorn app:app --reload</code>
           </p>
         </div>
       )}
 
-      <div className="flex-1 max-w-6xl mx-auto w-full px-6 py-10">
-        {/* Header row */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
           <div>
             <p className="mono-label text-[var(--emerald)] text-xs mb-1">COMPLIANCE CHECKLIST</p>
             <h1 className="display-heading text-xl text-[var(--paper)]">
-              {result.business_label}
+              {result.business_name ? (
+                <>
+                  {result.business_name}
+                  <span className="text-[var(--faint)]"> · </span>
+                  <span className="text-[var(--mute-text)] text-base">{result.business_label}</span>
+                </>
+              ) : result.business_label}
               <span className="text-[var(--faint)]"> · </span>
               <span className="text-[var(--mute-text)] text-base">{result.location}</span>
             </h1>
@@ -95,14 +129,14 @@ export default function ResultsPage() {
             )}
           </div>
 
-          {/* Status summary */}
-          <div className="flex gap-4 shrink-0">
+          {/* Status counts */}
+          <div className="flex gap-5 shrink-0">
             {(["required", "pending", "compliant"] as const).map((s) => (
               <div key={s} className="text-center">
                 <p className="display-heading text-xl" style={{
                   color: s === "required" ? "var(--required)" : s === "pending" ? "var(--pending)" : "var(--compliant)"
                 }}>
-                  {counts[s]}
+                  {statusCounts[s]}
                 </p>
                 <p className="mono-label text-[9px] text-[var(--faint)]">{s}</p>
               </div>
@@ -110,11 +144,26 @@ export default function ResultsPage() {
           </div>
         </div>
 
+        {/* Progress bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="mono-label text-[10px] text-[var(--faint)]">PROGRESS</span>
+            <span className="mono-label text-[10px] text-[var(--emerald)]">
+              {doneCount}/{totalCount} completed · {progressPct}%
+            </span>
+          </div>
+          <div className="h-1 bg-[var(--steel)] w-full">
+            <div
+              className="h-1 bg-[var(--emerald)] transition-all duration-300"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
           {/* Left: Checklist */}
           <div>
-            {/* Category filter */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-5">
               {CATEGORIES.map((c) => (
                 <CategoryChip
                   key={c}
@@ -125,68 +174,115 @@ export default function ResultsPage() {
               ))}
             </div>
 
-            {/* Items */}
             <div className="space-y-px">
               {filtered.length === 0 && (
                 <p className="text-[var(--faint)] text-sm py-8 text-center mono-label">
                   No items in this category.
                 </p>
               )}
-              {filtered.map((item: ChecklistItem) => (
-                <div key={item.id} className="bg-[var(--midnight)] border-b border-[var(--steel)]">
-                  <button
-                    className="w-full text-left px-5 py-4 flex items-start gap-4 hover:bg-[var(--navy)] transition-colors"
-                    onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+              {filtered.map((item: ChecklistItem) => {
+                const isChecked = checked.has(item.id);
+                const isExpanded = expandedId === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-[var(--midnight)] border-b border-[var(--steel)]"
+                    style={{ opacity: isChecked ? 0.5 : 1, transition: "opacity 0.2s" }}
                   >
-                    <StatusBadge status={item.status} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[var(--paper)] leading-snug">{item.title}</p>
-                      {item.agency && (
-                        <p className="mono-label text-[10px] text-[var(--faint)] mt-0.5">{item.agency}</p>
-                      )}
-                    </div>
-                    <span className="mono-label text-[10px] text-[var(--faint)] shrink-0 mt-0.5">
-                      {expandedId === item.id ? "▲" : "▼"}
-                    </span>
-                  </button>
+                    <div className="flex items-start gap-3 px-4 py-4">
+                      {/* Checkbox */}
+                      <button
+                        onClick={() => toggleChecked(item.id)}
+                        aria-label={isChecked ? "Mark incomplete" : "Mark complete"}
+                        className="mt-0.5 shrink-0 w-5 h-5 border flex items-center justify-center transition-colors"
+                        style={{
+                          borderColor: isChecked ? "var(--emerald)" : "var(--steel)",
+                          background: isChecked ? "var(--emerald)" : "transparent",
+                        }}
+                      >
+                        {isChecked && (
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                            <path d="M1 4L3.5 6.5L9 1" stroke="var(--void)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </button>
 
-                  {expandedId === item.id && (
-                    <div className="px-5 pb-5 border-t border-[var(--steel)] bg-[var(--navy)]">
-                      {item.detail && (
-                        <p className="text-sm text-[var(--mute-text)] leading-relaxed mt-4 mb-4">
-                          {item.detail}
-                        </p>
-                      )}
-                      <div className="grid grid-cols-3 gap-4 mt-3">
-                        {item.fee && (
-                          <div>
-                            <p className="mono-label text-[9px] text-[var(--faint)] mb-1">FEE</p>
-                            <p className="text-xs text-[var(--paper)]">{item.fee}</p>
-                          </div>
-                        )}
-                        {item.timeline && (
-                          <div>
-                            <p className="mono-label text-[9px] text-[var(--faint)] mb-1">TIMELINE</p>
-                            <p className="text-xs text-[var(--paper)]">{item.timeline}</p>
-                          </div>
-                        )}
-                        {item.renewal && (
-                          <div>
-                            <p className="mono-label text-[9px] text-[var(--faint)] mb-1">RENEWAL</p>
-                            <p className="text-xs text-[var(--paper)]">{item.renewal}</p>
-                          </div>
-                        )}
-                      </div>
+                      {/* Status + content */}
+                      <button
+                        className="flex-1 text-left flex items-start gap-3 min-w-0"
+                        onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                      >
+                        <StatusBadge status={item.status} />
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className="text-sm text-[var(--paper)] leading-snug"
+                            style={{ textDecoration: isChecked ? "line-through" : "none" }}
+                          >
+                            {item.title}
+                          </p>
+                          {item.agency && (
+                            <p className="mono-label text-[10px] text-[var(--faint)] mt-0.5">{item.agency}</p>
+                          )}
+                        </div>
+                        <span className="mono-label text-[10px] text-[var(--faint)] shrink-0 mt-0.5">
+                          {isExpanded ? "▲" : "▼"}
+                        </span>
+                      </button>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {isExpanded && (
+                      <div className="px-5 pb-5 border-t border-[var(--steel)] bg-[var(--navy)]">
+                        {item.detail && (
+                          <p className="text-sm text-[var(--mute-text)] leading-relaxed mt-4 mb-4">
+                            {item.detail}
+                          </p>
+                        )}
+                        <div className="grid grid-cols-3 gap-4">
+                          {item.fee && (
+                            <div>
+                              <p className="mono-label text-[9px] text-[var(--faint)] mb-1">FEE</p>
+                              <p className="text-xs text-[var(--paper)]">{item.fee}</p>
+                            </div>
+                          )}
+                          {item.timeline && (
+                            <div>
+                              <p className="mono-label text-[9px] text-[var(--faint)] mb-1">TIMELINE</p>
+                              <p className="text-xs text-[var(--paper)]">{item.timeline}</p>
+                            </div>
+                          )}
+                          {item.renewal && (
+                            <div>
+                              <p className="mono-label text-[9px] text-[var(--faint)] mb-1">RENEWAL</p>
+                              <p className="text-xs text-[var(--paper)]">{item.renewal}</p>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => toggleChecked(item.id)}
+                          className="mt-4 mono-label text-[10px] px-4 py-1.5 border transition-colors"
+                          style={{
+                            borderColor: isChecked ? "var(--emerald)" : "var(--steel)",
+                            color: isChecked ? "var(--emerald)" : "var(--faint)",
+                          }}
+                        >
+                          {isChecked ? "[✓ MARK INCOMPLETE]" : "[MARK COMPLETE]"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Right: Summary + Sources */}
+          {/* Right: Summary + Sources + Actions */}
           <div className="space-y-4">
-            {/* AI Summary */}
+            {result.description && (
+              <div className="bg-[var(--midnight)] border border-[var(--steel)] p-5">
+                <p className="mono-label text-[10px] text-[var(--faint)] mb-3">DESCRIPTION</p>
+                <p className="text-sm text-[var(--mute-text)] leading-relaxed line-clamp-4">{result.description}</p>
+              </div>
+            )}
             {result.summary && (
               <div className="bg-[var(--midnight)] border border-[var(--steel)] p-5">
                 <p className="mono-label text-[10px] text-[var(--emerald)] mb-3">[AI_SUMMARY]</p>
@@ -194,7 +290,6 @@ export default function ResultsPage() {
               </div>
             )}
 
-            {/* Sources */}
             {result.sources.length > 0 && (
               <div className="bg-[var(--midnight)] border border-[var(--steel)] p-5">
                 <p className="mono-label text-[10px] text-[var(--faint)] mb-3">SOURCES</p>
@@ -214,7 +309,6 @@ export default function ResultsPage() {
               </div>
             )}
 
-            {/* Actions */}
             <div className="space-y-2 no-print">
               <button
                 onClick={handleSave}

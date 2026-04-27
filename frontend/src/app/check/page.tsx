@@ -57,14 +57,12 @@ export default function CheckPage() {
     const fullDescription = [
       businessName && `Business name: ${businessName}.`,
       description,
-      businessType && `Business type: ${businessType}.`,
-      location && `Location: ${location}, Los Angeles.`,
     ]
       .filter(Boolean)
       .join(" ");
 
     try {
-      const result = await analyzeCompliance(fullDescription);
+      const result = await analyzeCompliance(fullDescription, businessType, location, businessName);
       sessionStorage.setItem("compliance_result", JSON.stringify(result));
       router.push("/results");
     } catch {
@@ -141,6 +139,10 @@ export default function CheckPage() {
                   <p className="display-heading text-sm text-[var(--paper)] mb-1">{label}</p>
                   <p className="text-xs text-[var(--faint)]">{hint}</p>
                 </button>
+              ))}
+              {/* Fill empty grid cells so they match the background */}
+              {Array.from({ length: (3 - (BUSINESS_TYPES.length % 3)) % 3 }).map((_, i) => (
+                <div key={`filler-${i}`} className="bg-[var(--midnight)]" />
               ))}
             </div>
             <div className="mt-8 flex justify-end">

@@ -21,13 +21,14 @@ export default function DashboardPage() {
   const [profiles, setProfiles] = useState<SavedProfile[]>([]);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("compliance_profiles") || "[]");
-    // Merge user-saved with mocks so the page is never empty
-    const merged = [...saved, ...MOCK_PROFILES].reduce<SavedProfile[]>((acc, p) => {
-      if (!acc.find((x) => x.id === p.id)) acc.push(p);
-      return acc;
-    }, []);
-    setProfiles(merged);
+    const raw = localStorage.getItem("compliance_profiles");
+    if (raw === null) {
+      // First visit — seed mock profiles into localStorage
+      localStorage.setItem("compliance_profiles", JSON.stringify(MOCK_PROFILES));
+      setProfiles(MOCK_PROFILES);
+    } else {
+      setProfiles(JSON.parse(raw));
+    }
   }, []);
 
   function loadProfile(profile: SavedProfile) {
@@ -37,16 +38,15 @@ export default function DashboardPage() {
 
   function deleteProfile(id: string) {
     const saved = JSON.parse(localStorage.getItem("compliance_profiles") || "[]");
-    const updated = (saved as SavedProfile[]).filter((p) => p.id !== id);
-    localStorage.setItem("compliance_profiles", JSON.stringify(updated));
-    setProfiles((prev) => prev.filter((p) => p.id !== id || MOCK_PROFILES.find((m) => m.id === id)));
+    localStorage.setItem("compliance_profiles", JSON.stringify((saved as SavedProfile[]).filter((p) => p.id !== id)));
+    setProfiles((prev) => prev.filter((p) => p.id !== id));
   }
 
   return (
     <div className="relative z-10 flex flex-col min-h-screen">
       <Navbar />
 
-      <div className="flex-1 max-w-6xl mx-auto w-full px-6 py-10">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
             <p className="mono-label text-[var(--emerald)] text-xs mb-1">DASHBOARD</p>
@@ -75,10 +75,12 @@ export default function DashboardPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="display-heading text-sm text-[var(--paper)] truncate">
-                      {profile.businessName || profile.businessLabel}
+                      {profile.businessName || TYPE_LABELS[profile.businessType] || profile.businessLabel}
                     </p>
                     <p className="mono-label text-[10px] text-[var(--faint)] mt-0.5">
-                      {TYPE_LABELS[profile.businessType] || profile.businessType} · {profile.location}
+                      {profile.businessName
+                        ? `${TYPE_LABELS[profile.businessType] || profile.businessLabel} · ${profile.location}`
+                        : profile.location}
                     </p>
                   </div>
                   <span className="mono-label text-[9px] text-[var(--faint)] shrink-0 mt-0.5">
@@ -118,16 +120,17 @@ export default function DashboardPage() {
                   >
                     [VIEW]
                   </button>
-                  {!MOCK_PROFILES.find((m) => m.id === profile.id) && (
-                    <button
-                      onClick={() => deleteProfile(profile.id)}
-                      className="mono-label text-[10px] px-3 py-2 border border-[var(--steel)] text-[var(--faint)] hover:border-[var(--required)] hover:text-[var(--required)] transition-colors"
-                    >
-                      [×]
-                    </button>
-                  )}
+                  <button
+                    onClick={() => deleteProfile(profile.id)}
+                    className="mono-label text-[10px] px-3 py-2 border border-[var(--steel)] text-[var(--faint)] hover:border-[var(--required)] hover:text-[var(--required)] transition-colors"
+                  >
+                    [×]
+                  </button>
                 </div>
               </div>
+            ))}
+            {Array.from({ length: (3 - (profiles.length % 3)) % 3 }).map((_, i) => (
+              <div key={`filler-${i}`} className="bg-[var(--midnight)] hidden lg:block" />
             ))}
           </div>
         )}

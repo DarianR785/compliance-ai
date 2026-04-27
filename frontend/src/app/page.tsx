@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
+import TypewriterHeadline from "@/components/ui/TypewriterHeadline";
 
 const steps = [
   {
@@ -21,34 +22,24 @@ const steps = [
 
 const features = [
   {
-    tag: "NER",
+    tag: "NER + POS",
     title: "Named Entity Recognition",
-    body: "spaCy extracts business type, location, capacity, and features (liquor, outdoor dining, construction) from free-text input.",
+    body: "spaCy extracts business type, location, capacity, and special features from free-text using a custom EntityRuler and part-of-speech tagging.",
   },
   {
-    tag: "GRAPH",
+    tag: "KNOWLEDGE GRAPH",
     title: "Regulatory Knowledge Graph",
-    body: "NetworkX directed graph encodes jurisdictions, permit types, and conditional dependencies — composite requirements are never missed.",
+    body: "NetworkX directed graph maps business types to required permits and conditional dependencies — so composite requirements like liquor + outdoor dining are never missed.",
   },
   {
     tag: "EMBEDDINGS",
     title: "Semantic Search",
-    body: "Sentence-BERT embeddings and cosine similarity retrieve the most relevant regulations from our LA regulatory corpus.",
+    body: "Sentence-BERT word embeddings and cosine similarity retrieve the most relevant LA regulations from our government-sourced corpus.",
   },
   {
-    tag: "SUMMARIZER",
+    tag: "TRANSFORMER",
     title: "BART Summarization",
-    body: "A BART transformer model translates dense municipal code into plain-language guidance with concrete costs and processing times.",
-  },
-  {
-    tag: "SOURCES",
-    title: "Source-Backed Results",
-    body: "Grounded in real government sources: LADBS, LAFD, LACDPH, CDTFA, ABC, and the U.S. Small Business Administration.",
-  },
-  {
-    tag: "PROFILES",
-    title: "Persistent Profiles",
-    body: "Save and revisit checklists as your business evolves. Track renewals and keep your compliance requirements current.",
+    body: "A BART transformer translates dense municipal code into plain-language guidance with concrete fees, processing times, and renewal schedules.",
   },
 ];
 
@@ -62,11 +53,7 @@ export default function Home() {
         <p className="mono-label text-[var(--emerald)] mb-5 text-xs">
           AI-Powered · Los Angeles · Small Business Compliance
         </p>
-        <h1 className="display-heading text-4xl md:text-[3.25rem] text-[var(--paper)] mb-6 leading-tight">
-          Know Every Permit
-          <br />
-          <span className="text-[var(--emerald)]">Before You Open.</span>
-        </h1>
+        <TypewriterHeadline />
         <p className="text-[var(--mute-text)] text-base md:text-lg max-w-xl mb-10 leading-relaxed">
           Describe your business in plain English. ComplianceCheck generates a
           complete, source-backed compliance checklist tailored to your business
@@ -91,7 +78,7 @@ export default function Home() {
       <div className="border-t border-[var(--steel)]" />
 
       {/* How It Works */}
-      <section className="py-16 px-6 max-w-6xl mx-auto w-full">
+      <section className="py-16 px-6 max-w-7xl mx-auto w-full">
         <p className="mono-label text-[var(--faint)] text-xs mb-8">HOW IT WORKS</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--steel)]">
           {steps.map(({ num, title, body }) => (
@@ -109,9 +96,9 @@ export default function Home() {
       <div className="border-t border-[var(--steel)]" />
 
       {/* Core Techniques */}
-      <section className="py-16 px-6 max-w-6xl mx-auto w-full">
+      <section className="py-16 px-6 max-w-7xl mx-auto w-full">
         <p className="mono-label text-[var(--faint)] text-xs mb-8">CORE NLP TECHNIQUES</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--steel)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[var(--steel)]">
           {features.map(({ tag, title, body }) => (
             <div key={tag} className="bg-[var(--midnight)] p-6 flex flex-col gap-3">
               <span className="mono-label text-[10px] text-[var(--trace)] bg-[var(--trace)]/10 px-2 py-0.5 w-fit border border-[var(--trace)]/20">
@@ -146,7 +133,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-[var(--steel)] py-6 px-6 no-print mt-auto">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="mono-label text-[var(--faint)] text-[10px]">
             [COMPLIANCE_CHECK] — USC TAC 459 NLP Project
           </span>

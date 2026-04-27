@@ -18,10 +18,12 @@ export interface Source {
 }
 
 export interface AnalyzeResponse {
+  business_name: string;
   business_type: string;
   business_label: string;
   location: string;
   features: string[];
+  description: string;
   summary: string;
   checklist: ChecklistItem[];
   sources: Source[];
