@@ -72,21 +72,28 @@ export default function ResultsPage() {
   };
 
   function handleSave() {
-    const existing = JSON.parse(localStorage.getItem("compliance_profiles") || "[]");
-    const profile = {
-      id: `profile-${Date.now()}`,
+    const existing: SavedProfile[] = JSON.parse(localStorage.getItem("compliance_profiles") || "[]");
+    const matchIndex = existing.findIndex(
+      (p) =>
+        p.businessType === result!.business_type &&
+        p.location === result!.location &&
+        (p.businessName || "") === (result!.business_name || "")
+    );
+    const profile: SavedProfile = {
+      id: matchIndex >= 0 ? existing[matchIndex].id : `profile-${Date.now()}`,
       businessName: result!.business_name,
       businessType: result!.business_type,
       businessLabel: result!.business_label,
       location: result!.location,
       savedAt: new Date().toISOString().split("T")[0],
       itemCounts: statusCounts,
-      data: result,
+      data: result!,
     };
-    localStorage.setItem(
-      "compliance_profiles",
-      JSON.stringify([profile, ...existing].slice(0, 10))
-    );
+    const updated =
+      matchIndex >= 0
+        ? existing.map((p, i) => (i === matchIndex ? profile : p))
+        : [profile, ...existing].slice(0, 10);
+    localStorage.setItem("compliance_profiles", JSON.stringify(updated));
     setSaved(true);
   }
 

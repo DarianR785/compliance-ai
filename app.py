@@ -20,18 +20,25 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Try to load the NLP pipeline — graceful fallback if dependencies missing
-PIPELINE_AVAILABLE = False
+# NER loads independently — it has its own regex fallback if spaCy is missing
+NER_AVAILABLE = False
+SEARCH_AVAILABLE = False
 KG_AVAILABLE = False
 
 try:
     from pipeline.ner import extract_entities, entities_to_graph_input
+    NER_AVAILABLE = True
+    print("[app.py] NER loaded successfully")
+except Exception as e:
+    print(f"[app.py] NER unavailable ({e})")
+
+try:
     from pipeline.search import retrieve_relevant_regulations
     from pipeline.summarizer import generate_output
-    PIPELINE_AVAILABLE = True
-    print("[app.py] NLP pipeline loaded successfully")
+    SEARCH_AVAILABLE = True
+    print("[app.py] Search + summarizer loaded successfully")
 except Exception as e:
-    print(f"[app.py] NLP pipeline unavailable ({e})")
+    print(f"[app.py] Search/summarizer unavailable ({e}) — install sentence-transformers + transformers")
 
 try:
     from pipeline.knowledge_graph import build_knowledge_graph, query_permits
@@ -60,6 +67,9 @@ app.add_middleware(
 
 class AnalyzeRequest(BaseModel):
     description: str
+    business_type: str = ""
+    location: str = ""
+    business_name: str = ""
 
 
 MOCK_RESPONSE = {
@@ -205,7 +215,8 @@ def _label_to_category(label: str, permit_id: str) -> str:
 def health():
     return {
         "status": "ok",
-        "pipeline_loaded": PIPELINE_AVAILABLE,
+        "ner_loaded": NER_AVAILABLE,
+    "search_loaded": SEARCH_AVAILABLE,
         "kg_loaded": KG_AVAILABLE,
         "timestamp": datetime.utcnow().isoformat(),
     }
@@ -217,23 +228,24 @@ def analyze(request: AnalyzeRequest):
     if not description:
         raise HTTPException(status_code=400, detail="Description is required")
 
-    # If neither the NLP pipeline nor knowledge graph is available, use mock
-    if not PIPELINE_AVAILABLE and not KG_AVAILABLE:
+    if not NER_AVAILABLE and not KG_AVAILABLE:
         return MOCK_RESPONSE
 
     try:
-        # Step 1: NER — extract structured entities from user text
-        if PIPELINE_AVAILABLE:
+        # Step 1: NER — extract features/capacity from text, but override
+        # business_type and location with explicit form values if provided
+        if NER_AVAILABLE:
             entities = extract_entities(description)
             graph_input = entities_to_graph_input(entities)
         else:
             graph_input = {"business_type": None, "features": [], "location": "Los Angeles", "capacity": None}
 
-        business_type = graph_input.get("business_type")
+        # Explicit form fields always win over NER extraction
+        business_type = request.business_type.strip() or graph_input.get("business_type")
+        location = request.location.strip() or graph_input.get("location") or "Los Angeles"
         features = graph_input.get("features") or []
-        location = graph_input.get("location") or "Los Angeles"
 
-        # Step 2: Knowledge Graph — get structured permit requirements
+        # Step 2: Knowledge Graph — structured permit requirements
         checklist_items = []
         kg_summary = ""
         kg_sources = []
@@ -259,10 +271,9 @@ def analyze(request: AnalyzeRequest):
         else:
             business_label = business_type or "business"
 
-        # Step 3: Semantic Search — retrieve regulation texts using embeddings
-        # and cosine similarity (SentenceTransformer from search.py)
+        # Step 3+4: Semantic search + BART summarization (optional heavy deps)
         nlp_summary = kg_summary
-        if PIPELINE_AVAILABLE:
+        if SEARCH_AVAILABLE:
             try:
                 regulations = retrieve_relevant_regulations(
                     query=description,
@@ -270,12 +281,9 @@ def analyze(request: AnalyzeRequest):
                     top_k=5,
                 )
                 if regulations:
-                    # Step 4: Summarizer — BART/extractive summary of retrieved texts
                     output = generate_output(regulations)
                     nlp_summary = output.get("summary", kg_summary) or kg_summary
                     kg_sources = output.get("sources", [])
-
-                    # If KG gave no results (unknown business type), use NLP checklist
                     if not checklist_items:
                         for i, item_text in enumerate(output.get("checklist", []), start=1):
                             checklist_items.append({
@@ -291,16 +299,18 @@ def analyze(request: AnalyzeRequest):
                                 "renewal": "",
                             })
             except Exception as e:
-                print(f"[app.py] NLP pipeline step error: {e}")
+                print(f"[app.py] Search/summarizer error: {e}")
 
         if not checklist_items and not nlp_summary:
             return MOCK_RESPONSE
 
         return {
+            "business_name": request.business_name.strip(),
             "business_type": business_type or "business",
             "business_label": business_label,
             "location": location,
             "features": features,
+            "description": description,
             "summary": nlp_summary or kg_summary,
             "checklist": checklist_items,
             "sources": kg_sources,
