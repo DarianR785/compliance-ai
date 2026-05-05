@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import { analyzeCompliance } from "@/lib/api";
@@ -42,6 +42,19 @@ export default function CheckPage() {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem("compliance_prefill");
+    if (!raw) return;
+    try {
+      const prefill = JSON.parse(raw);
+      if (prefill.businessType) setBusinessType(prefill.businessType);
+      if (prefill.businessName) setBusinessName(prefill.businessName);
+      if (prefill.location) setLocation(prefill.location);
+      if (prefill.description) setDescription(prefill.description);
+      sessionStorage.removeItem("compliance_prefill");
+    } catch { /* ignore */ }
+  }, []);
 
   async function handleSubmit() {
     setLoading(true);

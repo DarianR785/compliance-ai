@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CategoryChip from "@/components/ui/CategoryChip";
+import { analyzeCompliance } from "@/lib/api";
 import type { AnalyzeResponse, ChecklistItem, SavedProfile } from "@/lib/types";
 
 type Category = "all" | "permits" | "licenses" | "inspections" | "zoning";
@@ -23,6 +23,29 @@ function getCheckedKey(resultId: string) {
   return `${STORAGE_KEY}_${resultId}`;
 }
 
+function saveToProfile(parsed: AnalyzeResponse, stableId: string) {
+  const existing: SavedProfile[] = JSON.parse(localStorage.getItem("compliance_profiles") || "[]");
+  const matchIndex = existing.findIndex((p) => p.id === stableId);
+  const profile: SavedProfile = {
+    id: stableId,
+    businessName: parsed.business_name,
+    businessType: parsed.business_type,
+    businessLabel: parsed.business_label,
+    location: parsed.location,
+    savedAt: new Date().toISOString().split("T")[0],
+    itemCounts: {
+      required: parsed.checklist.filter((i) => i.status === "required").length,
+      pending: parsed.checklist.filter((i) => i.status === "pending").length,
+      compliant: parsed.checklist.filter((i) => i.status === "compliant").length,
+    },
+    data: parsed,
+  };
+  const updated = matchIndex >= 0
+    ? existing.map((p, i) => (i === matchIndex ? profile : p))
+    : [profile, ...existing].slice(0, 10);
+  localStorage.setItem("compliance_profiles", JSON.stringify(updated));
+}
+
 export default function ResultsPage() {
   const router = useRouter();
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
@@ -31,20 +54,24 @@ export default function ResultsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [saved, setSaved] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenFlash, setRegenFlash] = useState<"success" | "error" | null>(null);
+  const [lastRegenAt, setLastRegenAt] = useState<string | null>(null);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("compliance_result");
     if (!raw) { router.push("/check"); return; }
     try {
       const parsed: AnalyzeResponse = JSON.parse(raw);
-      // Stable ID from business type + location
-      const nameSlug = parsed.business_name ? `_${parsed.business_name}` : "";
-      const id = `${parsed.business_type}${nameSlug}_${parsed.location}`.replace(/\s+/g, "_").toLowerCase();
+      // Reuse stable ID from a previous session (edit flow) or mint a new one
+      const stableId = sessionStorage.getItem("compliance_profile_id") || `profile-${Date.now()}`;
+      sessionStorage.setItem("compliance_profile_id", stableId);
       setResult(parsed);
-      setResultId(id);
-      // Load persisted checked state
-      const savedChecked = localStorage.getItem(getCheckedKey(id));
+      setResultId(stableId);
+      const savedChecked = localStorage.getItem(getCheckedKey(stableId));
       if (savedChecked) setChecked(new Set(JSON.parse(savedChecked)));
+      saveToProfile(parsed, stableId);
+      setSaved(true);
     } catch { router.push("/check"); }
   }, [router]);
 
@@ -78,30 +105,39 @@ export default function ResultsPage() {
     compliant: result.checklist.filter((i) => i.status === "compliant").length + doneCount,
   };
 
-  function handleSave() {
-    const existing: SavedProfile[] = JSON.parse(localStorage.getItem("compliance_profiles") || "[]");
-    const matchIndex = existing.findIndex(
-      (p) =>
-        p.businessType === result!.business_type &&
-        p.location === result!.location &&
-        (p.businessName || "") === (result!.business_name || "")
-    );
-    const profile: SavedProfile = {
-      id: matchIndex >= 0 ? existing[matchIndex].id : `profile-${Date.now()}`,
-      businessName: result!.business_name,
-      businessType: result!.business_type,
-      businessLabel: result!.business_label,
-      location: result!.location,
-      savedAt: new Date().toISOString().split("T")[0],
-      itemCounts: statusCounts,
-      data: result!,
-    };
-    const updated =
-      matchIndex >= 0
-        ? existing.map((p, i) => (i === matchIndex ? profile : p))
-        : [profile, ...existing].slice(0, 10);
-    localStorage.setItem("compliance_profiles", JSON.stringify(updated));
-    setSaved(true);
+  function handleEdit() {
+    if (!result) return;
+    sessionStorage.setItem("compliance_prefill", JSON.stringify({
+      businessType: result.business_type,
+      businessName: result.business_name,
+      location: result.location,
+      description: result.description,
+    }));
+    router.push("/check");
+  }
+
+  async function handleRegenerate() {
+    if (!result) return;
+    setRegenerating(true);
+    setRegenFlash(null);
+    try {
+      const fresh = await analyzeCompliance(
+        result.description,
+        result.business_type,
+        result.location,
+        result.business_name,
+      );
+      sessionStorage.setItem("compliance_result", JSON.stringify(fresh));
+      setResult(fresh);
+      saveToProfile(fresh, resultId);
+      setLastRegenAt(new Date().toLocaleTimeString());
+      setRegenFlash("success");
+    } catch {
+      setRegenFlash("error");
+    } finally {
+      setRegenerating(false);
+      setTimeout(() => setRegenFlash(null), 4000);
+    }
   }
 
   return (
@@ -353,25 +389,38 @@ export default function ResultsPage() {
             )}
 
             <div className="space-y-2 no-print">
+              <p className="mono-label text-[10px] text-[var(--emerald)] text-center py-1">
+                {saved ? "[✓ AUTO-SAVED TO DASHBOARD]" : "[SAVING...]"}
+              </p>
               <button
-                onClick={handleSave}
-                disabled={saved}
-                className="w-full mono-label text-xs py-2.5 border border-[var(--steel)] text-[var(--mute-text)] hover:border-[var(--emerald)] hover:text-[var(--emerald)] transition-colors disabled:opacity-50"
+                onClick={handleRegenerate}
+                disabled={regenerating}
+                className="w-full mono-label text-xs py-2.5 border transition-colors disabled:opacity-50"
+                style={{
+                  borderColor: regenFlash === "success" ? "var(--emerald)" : regenFlash === "error" ? "var(--required)" : "var(--steel)",
+                  color: regenFlash === "success" ? "var(--emerald)" : regenFlash === "error" ? "var(--required)" : "var(--mute-text)",
+                }}
               >
-                {saved ? "[✓ SAVED TO DASHBOARD]" : "[SAVE TO DASHBOARD]"}
+                {regenerating
+                  ? "[REGENERATING...]"
+                  : regenFlash === "success"
+                  ? `[✓ UPDATED · ${lastRegenAt}]`
+                  : regenFlash === "error"
+                  ? "[✗ FAILED — TRY AGAIN]"
+                  : "[↺ REGENERATE]"}
+              </button>
+              <button
+                onClick={handleEdit}
+                className="w-full mono-label text-xs py-2.5 border border-[var(--steel)] text-[var(--mute-text)] hover:border-[var(--trace)] hover:text-[var(--trace)] transition-colors"
+              >
+                [✎ EDIT]
               </button>
               <button
                 onClick={() => window.print()}
-                className="w-full mono-label text-xs py-2.5 border border-[var(--steel)] text-[var(--mute-text)] hover:border-[var(--trace)] hover:text-[var(--trace)] transition-colors"
+                className="w-full mono-label text-xs py-2.5 border border-[var(--steel)] text-[var(--faint)] hover:text-[var(--mute-text)] transition-colors"
               >
                 [EXPORT PDF]
               </button>
-              <Link
-                href="/check"
-                className="w-full mono-label text-xs py-2.5 border border-[var(--steel)] text-[var(--faint)] hover:text-[var(--mute-text)] transition-colors block text-center"
-              >
-                [START OVER]
-              </Link>
             </div>
           </div>
         </div>
