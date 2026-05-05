@@ -5,10 +5,17 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CategoryChip from "@/components/ui/CategoryChip";
-import type { AnalyzeResponse, ChecklistItem } from "@/lib/types";
+import type { AnalyzeResponse, ChecklistItem, SavedProfile } from "@/lib/types";
 
 type Category = "all" | "permits" | "licenses" | "inspections" | "zoning";
 const CATEGORIES: Category[] = ["all", "permits", "licenses", "inspections", "zoning"];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  permits:     "var(--trace)",
+  licenses:    "#A78BFA",
+  inspections: "var(--pending)",
+  zoning:      "#34D399",
+};
 const PRIORITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 const STORAGE_KEY = "compliance_checked_items";
 
@@ -190,20 +197,25 @@ export default function ResultsPage() {
               {filtered.map((item: ChecklistItem) => {
                 const isChecked = checked.has(item.id);
                 const isExpanded = expandedId === item.id;
+                const categoryColor = CATEGORY_COLORS[item.category] ?? "var(--steel)";
                 return (
                   <div
                     key={item.id}
                     className="bg-[var(--midnight)] border-b border-[var(--steel)]"
-                    style={{ opacity: isChecked ? 0.5 : 1, transition: "opacity 0.2s" }}
+                    style={{
+                      opacity: isChecked ? 0.5 : 1,
+                      transition: "opacity 0.2s",
+                      borderLeft: `3px solid ${categoryColor}`,
+                    }}
                   >
                     <div className="flex items-start gap-3 px-4 py-4">
-                      {/* Checkbox */}
+                      {/* Checkbox — colored by category */}
                       <button
                         onClick={() => toggleChecked(item.id)}
                         aria-label={isChecked ? "Mark incomplete" : "Mark complete"}
                         className="mt-0.5 shrink-0 w-5 h-5 border flex items-center justify-center transition-colors"
                         style={{
-                          borderColor: isChecked ? "var(--emerald)" : "var(--steel)",
+                          borderColor: isChecked ? "var(--emerald)" : categoryColor,
                           background: isChecked ? "var(--emerald)" : "transparent",
                         }}
                       >
@@ -264,16 +276,29 @@ export default function ResultsPage() {
                             </div>
                           )}
                         </div>
-                        <button
-                          onClick={() => toggleChecked(item.id)}
-                          className="mt-4 mono-label text-[10px] px-4 py-1.5 border transition-colors"
-                          style={{
-                            borderColor: isChecked ? "var(--emerald)" : "var(--steel)",
-                            color: isChecked ? "var(--emerald)" : "var(--faint)",
-                          }}
-                        >
-                          {isChecked ? "[✓ MARK INCOMPLETE]" : "[MARK COMPLETE]"}
-                        </button>
+                        <div className="mt-4 flex items-center gap-3 flex-wrap">
+                          <button
+                            onClick={() => toggleChecked(item.id)}
+                            className="mono-label text-[10px] px-4 py-1.5 border transition-colors"
+                            style={{
+                              borderColor: isChecked ? "var(--emerald)" : "var(--steel)",
+                              color: isChecked ? "var(--emerald)" : "var(--faint)",
+                            }}
+                          >
+                            {isChecked ? "[✓ MARK INCOMPLETE]" : "[MARK COMPLETE]"}
+                          </button>
+                          {item.url && (
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mono-label text-[10px] px-4 py-1.5 border transition-colors"
+                              style={{ borderColor: categoryColor, color: categoryColor }}
+                            >
+                              [VIEW SOURCE ↗]
+                            </a>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -304,7 +329,18 @@ export default function ResultsPage() {
                   {result.sources.map((src, i) => (
                     <div key={i} className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-xs text-[var(--paper)] leading-snug">{src.title}</p>
+                        {src.url ? (
+                          <a
+                            href={src.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-[var(--paper)] leading-snug hover:text-[var(--emerald)] transition-colors underline underline-offset-2"
+                          >
+                            {src.title}
+                          </a>
+                        ) : (
+                          <p className="text-xs text-[var(--paper)] leading-snug">{src.title}</p>
+                        )}
                         <p className="mono-label text-[9px] text-[var(--faint)] mt-0.5">{src.agency}</p>
                       </div>
                       <span className="mono-label text-[10px] text-[var(--emerald)] shrink-0">

@@ -9,12 +9,14 @@ export interface ChecklistItem {
   fee: string;
   timeline: string;
   renewal: string;
+  url?: string;
 }
 
 export interface Source {
   title: string;
   agency: string;
   score: number;
+  url?: string;
 }
 
 export interface AnalyzeResponse {

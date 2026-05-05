@@ -4,15 +4,21 @@ app.py — ComplianceCheck FastAPI Backend
 Pipeline flow:
   1. NER (ner.py) — extract business_type, location, features from user text
   2. Knowledge Graph (knowledge_graph.py) — query structured permit requirements
-  3. Semantic Search (search.py) — retrieve relevant regulation texts via embeddings
-  4. Summarizer (summarizer.py) — BART/extractive summary of regulation texts
+  3a. [Modern] Tavily live search — real government sources, cited URLs (USE_TAVILY=True)
+  3b. [Legacy] search.py + summarizer.py — local embeddings over regulations.json
 
-Falls back to hardcoded mock data if ML dependencies are not installed.
+USE_TAVILY=True by default. Set to False to use the legacy embedding pipeline.
+Falls back to hardcoded mock data if all steps fail.
 """
 
+import json
 import os
 import sys
 from datetime import datetime
+
+# Feature flag — True routes Step 3 through TavilySearchClient (live gov sources).
+# Set USE_TAVILY=false in your environment to fall back to the local embedding pipeline.
+USE_TAVILY = os.getenv("USE_TAVILY", "true").lower() != "false"
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -24,6 +30,7 @@ from pydantic import BaseModel
 NER_AVAILABLE = False
 SEARCH_AVAILABLE = False
 KG_AVAILABLE = False
+TAVILY_AVAILABLE = False
 
 try:
     from pipeline.ner import extract_entities, entities_to_graph_input
@@ -48,6 +55,19 @@ try:
 except Exception as e:
     print(f"[app.py] Knowledge graph unavailable ({e})")
     _kg = None
+
+if USE_TAVILY:
+    try:
+        from apis import TavilySearchClient
+        _tavily = TavilySearchClient()
+        TAVILY_AVAILABLE = True
+        print("[app.py] Tavily search loaded successfully (modern mode)")
+    except Exception as e:
+        print(f"[app.py] Tavily unavailable ({e}) — falling back to legacy search")
+        _tavily = None
+else:
+    _tavily = None
+    print("[app.py] USE_TAVILY=false — using legacy embedding pipeline")
 
 
 app = FastAPI(title="ComplianceCheck API", version="1.0.0")
@@ -199,6 +219,69 @@ def _priority_to_status(priority: str) -> str:
     return "pending"
 
 
+def _load_regulations(business_type: str, features: list) -> list:
+    """Load and filter regulations.json by business_type and features."""
+    try:
+        reg_path = os.path.join(os.path.dirname(__file__), "data", "regulations.json")
+        with open(reg_path, "r") as f:
+            all_regs = json.load(f)
+    except Exception:
+        return []
+
+    results = []
+    for reg in all_regs:
+        bt = reg.get("business_type", [])
+        if isinstance(bt, str):
+            bt = [bt]
+        if business_type and business_type not in bt:
+            continue
+        reg_features = reg.get("features", [])
+        # Include if no feature requirement, or if user has the required feature
+        if reg_features and not any(f in features for f in reg_features):
+            continue
+        results.append(reg)
+    return results
+
+
+def _match_tavily_url(reg: dict, tavily_results: list) -> str:
+    """Find the best matching Tavily URL for a regulation by keyword overlap."""
+    reg_words = set(
+        (reg.get("title", "") + " " + reg.get("agency", "")).lower().split()
+    )
+    best_url, best_score = "", 0
+    for r in tavily_results:
+        result_words = set((r.title + " " + r.content[:200]).lower().split())
+        score = len(reg_words & result_words)
+        if score > best_score:
+            best_score = score
+            best_url = r.url
+    return best_url
+
+
+def _regulations_to_checklist(regulations: list, tavily_results: list) -> list:
+    """Convert regulations.json entries into structured checklist items, enriched with Tavily URLs."""
+    priority_map = {"permits": "high", "licenses": "critical", "inspections": "high", "zoning": "medium"}
+    items = []
+    for reg in regulations:
+        category = reg.get("category", "permits")
+        priority = priority_map.get(category, "high")
+        url = _match_tavily_url(reg, tavily_results) if tavily_results else ""
+        items.append({
+            "id": reg.get("id", ""),
+            "title": reg.get("title", ""),
+            "status": "required" if priority in ("critical", "high") else "pending",
+            "priority": priority,
+            "category": category,
+            "detail": reg.get("text", ""),
+            "agency": reg.get("agency", ""),
+            "fee": reg.get("fee", ""),
+            "timeline": reg.get("timeline", ""),
+            "renewal": "",
+            "url": url,
+        })
+    return items
+
+
 def _label_to_category(label: str, permit_id: str) -> str:
     """Infer checklist category from permit label and ID."""
     label_lower = label.lower()
@@ -228,7 +311,7 @@ def analyze(request: AnalyzeRequest):
     if not description:
         raise HTTPException(status_code=400, detail="Description is required")
 
-    if not NER_AVAILABLE and not KG_AVAILABLE:
+    if not NER_AVAILABLE and not KG_AVAILABLE and not TAVILY_AVAILABLE:
         return MOCK_RESPONSE
 
     try:
@@ -245,12 +328,13 @@ def analyze(request: AnalyzeRequest):
         location = request.location.strip() or graph_input.get("location") or "Los Angeles"
         features = graph_input.get("features") or []
 
-        # Step 2: Knowledge Graph — structured permit requirements
         checklist_items = []
         kg_summary = ""
         kg_sources = []
+        business_label = business_type or "business"
 
-        if KG_AVAILABLE and _kg and business_type and business_type in _kg.nodes:
+        # Step 2: Knowledge Graph — only used when Tavily is unavailable
+        if not TAVILY_AVAILABLE and KG_AVAILABLE and _kg and business_type and business_type in _kg.nodes:
             kg_result = query_permits(_kg, business_type, features)
             kg_summary = kg_result.get("summary", "")
             business_label = kg_result.get("business_label", business_type)
@@ -268,12 +352,40 @@ def analyze(request: AnalyzeRequest):
                     "timeline": permit.get("processing_time", ""),
                     "renewal": permit.get("renewal", ""),
                 })
-        else:
-            business_label = business_type or "business"
 
-        # Step 3+4: Semantic search + BART summarization (optional heavy deps)
+        # Step 3: Search — Tavily (default) or local embeddings (legacy fallback)
         nlp_summary = kg_summary
-        if SEARCH_AVAILABLE:
+        if TAVILY_AVAILABLE and _tavily:
+            try:
+                tavily_resp = _tavily.search_regulations(
+                    topic=f"required permits licenses {business_type} {location}",
+                    business_type=business_type,
+                    location=location,
+                )
+                if tavily_resp.succeeded:
+                    nlp_summary = tavily_resp.summary or kg_summary
+                    kg_sources = [
+                        {
+                            "title": r.title,
+                            "agency": r.source_domain,
+                            "score": r.score,
+                            "url": r.url,
+                        }
+                        for r in tavily_resp.results
+                    ]
+
+                # Build checklist from regulations.json (clean permit names/descriptions)
+                # enriched with matched Tavily URLs as sources
+                if not checklist_items and business_type:
+                    regulations = _load_regulations(business_type, features)
+                    checklist_items = _regulations_to_checklist(
+                        regulations,
+                        tavily_resp.results if tavily_resp.succeeded else [],
+                    )
+            except Exception as e:
+                print(f"[app.py] Tavily error: {e}")
+
+        elif SEARCH_AVAILABLE:
             try:
                 regulations = retrieve_relevant_regulations(
                     query=description,

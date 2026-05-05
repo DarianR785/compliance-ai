@@ -1,9 +1,11 @@
 import type { AnalyzeResponse, SavedProfile } from "./types";
 
 export const MOCK_RESPONSE: AnalyzeResponse = {
+  business_name: "Demo Restaurant",
   business_type: "restaurant",
   business_label: "Restaurant",
   location: "Koreatown",
+  description: "A restaurant with alcohol service and outdoor dining in Koreatown.",
   features: ["liquor", "outdoor_dining"],
   summary:
     "A restaurant with alcohol service and outdoor dining in Koreatown requires permits from multiple city, county, and state agencies. The ABC liquor license can take 2–6 months to process — start this application early. A Public Health Permit from LACDPH is required before opening, and an Outdoor Dining Permit is needed for any patio or sidewalk seating. A Certificate of Occupancy must be obtained before opening to the public.",
