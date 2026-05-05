@@ -1,0 +1,347 @@
+[
+  {
+    "id": "lacdph-health-permit",
+    "title": "Public Health Permit — Food Facility",
+    "agency": "LA County Department of Public Health",
+    "business_type": ["restaurant", "bakery", "food_truck"],
+    "features": [],
+    "location": "Los Angeles",
+    "category": "permits",
+    "text": "A food facility permit is required before operating any business that handles, prepares, or sells food to the public. The owner must submit a completed application, pay the required permit fee, and pass an initial inspection by an Environmental Health Specialist. Permit fees range from $685 to $1,400 depending on the type and seating capacity of the facility. The permit must be renewed annually and posted in a conspicuous location visible to customers.",
+    "requirements": [
+      "Completed permit application",
+      "Payment of permit fee ($685–$1,400)",
+      "Pass initial health inspection",
+      "Annual renewal"
+    ],
+    "fee": "$685–$1,400",
+    "timeline": "2–4 weeks for initial inspection"
+  },
+  {
+    "id": "city-btrc",
+    "title": "Business Tax Registration Certificate",
+    "agency": "City of Los Angeles Office of Finance",
+    "business_type": ["restaurant", "salon", "retail", "contractor", "bakery", "bar", "food_truck"],
+    "features": [],
+    "location": "Los Angeles",
+    "category": "licenses",
+    "text": "Every person engaged in business in the City of Los Angeles must obtain a Business Tax Registration Certificate (BTRC) before commencing operations. The certificate must be renewed annually and displayed at the place of business. Businesses are required to pay the applicable business tax based on gross receipts or a flat fee schedule. Failure to register may result in penalties and late fees.",
+    "requirements": [
+      "Online or in-person application",
+      "Payment of business tax ($50–$250 annual)",
+      "Annual renewal by February 28"
+    ],
+    "fee": "$50–$250 annually",
+    "timeline": "Same day if applied online"
+  },
+  {
+    "id": "abc-type47",
+    "title": "ABC Type 47 On-Sale General License — Full Liquor",
+    "agency": "California Department of Alcoholic Beverage Control",
+    "business_type": ["restaurant", "bar"],
+    "features": ["liquor"],
+    "location": "Los Angeles",
+    "category": "licenses",
+    "text": "A Type 47 On-Sale General license is required for any eating establishment that wishes to sell beer, wine, and distilled spirits for consumption on the premises. The application must be filed with the California ABC and posted at the premises for public protest. The license requires proof of local government approval, a premises diagram, financial disclosure, and a live scan background check. The license may be subject to conditions imposed by the ABC or local jurisdiction. Processing takes 90–120 days on average.",
+    "requirements": [
+      "ABC application and disclosure forms",
+      "Live scan fingerprinting and background check",
+      "Premises diagram",
+      "Local government approval letter",
+      "Public posting for 30-day protest period"
+    ],
+    "fee": "$900 initial; annual renewal fee varies",
+    "timeline": "90–120 days"
+  },
+  {
+    "id": "abc-type41",
+    "title": "ABC Type 41 On-Sale Beer and Wine License",
+    "agency": "California Department of Alcoholic Beverage Control",
+    "business_type": ["restaurant", "bakery"],
+    "features": ["liquor"],
+    "location": "Los Angeles",
+    "category": "licenses",
+    "text": "A Type 41 license permits the sale of beer and wine only for consumption on the premises in a bona fide eating establishment. This license is a less expensive and faster alternative to the Type 47 for establishments not serving distilled spirits. The application process includes a background check, premises diagram, and 30-day public protest posting period.",
+    "requirements": [
+      "ABC application",
+      "Background check",
+      "Premises diagram",
+      "30-day public protest period"
+    ],
+    "fee": "$350 initial",
+    "timeline": "60–90 days"
+  },
+  {
+    "id": "ladot-outdoor-dining",
+    "title": "Outdoor Dining Encroachment Permit",
+    "agency": "City of Los Angeles Department of Transportation",
+    "business_type": ["restaurant", "bar", "bakery"],
+    "features": ["outdoor_dining"],
+    "location": "Los Angeles",
+    "category": "permits",
+    "text": "An Encroachment Permit is required for any restaurant or food establishment that wishes to place tables, chairs, or dining structures in the public right-of-way, including sidewalks. The permit application must include a site plan showing the placement of furniture, clearance dimensions, and compliance with ADA accessibility requirements. A minimum 4-foot clear pedestrian path must be maintained. Annual permit renewal is required.",
+    "requirements": [
+      "Site plan with furniture layout",
+      "ADA compliance documentation",
+      "Insurance certificate naming the City as additionally insured",
+      "Annual renewal"
+    ],
+    "fee": "Varies by linear footage",
+    "timeline": "4–8 weeks"
+  },
+  {
+    "id": "lafd-inspection",
+    "title": "Fire Safety Inspection and Certificate of Occupancy",
+    "agency": "Los Angeles Fire Department",
+    "business_type": ["restaurant", "retail", "salon", "bar", "bakery"],
+    "features": [],
+    "location": "Los Angeles",
+    "category": "inspections",
+    "text": "A fire safety inspection is required before any new business opens or when occupancy changes. The inspection verifies that the premises comply with the Los Angeles Fire Code, including fire suppression systems, exit signage, emergency lighting, and occupancy load limits. A Certificate of Occupancy from LADBS is required for new construction or tenant improvements. Restaurants with commercial kitchens must install a Type I hood with a fire suppression system.",
+    "requirements": [
+      "Schedule inspection with LAFD",
+      "Fire extinguishers (minimum Class K for kitchens)",
+      "Exit signs and emergency lighting installed",
+      "Occupancy load posted",
+      "Type I hood with suppression system (commercial kitchens)"
+    ],
+    "fee": "No fee for initial inspection; re-inspection fee $100",
+    "timeline": "2–4 weeks after scheduling"
+  },
+  {
+    "id": "ladbs-certificate-occupancy",
+    "title": "Certificate of Occupancy",
+    "agency": "LA Department of Building and Safety",
+    "business_type": ["restaurant", "retail", "salon", "bar", "bakery", "contractor"],
+    "features": ["construction"],
+    "location": "Los Angeles",
+    "category": "zoning",
+    "text": "A Certificate of Occupancy (C of O) is required before any building or tenant space can be legally occupied for business purposes. When a new business moves into a space or a change of use occurs, the owner must apply for a new or amended C of O. For tenant improvements, approved building permits must be finaled before the C of O is issued. The certificate verifies the building complies with zoning, building code, and fire code requirements.",
+    "requirements": [
+      "Finaled building permits for any tenant improvements",
+      "Passed all required inspections (LADBS and LAFD)",
+      "Zoning clearance",
+      "ADA compliance"
+    ],
+    "fee": "$100–$500 depending on use category",
+    "timeline": "2–6 weeks after permit finals"
+  },
+  {
+    "id": "cdtfa-sellers-permit",
+    "title": "Seller's Permit — Sales Tax Registration",
+    "agency": "California Department of Tax and Fee Administration",
+    "business_type": ["restaurant", "retail", "bakery", "food_truck", "bar"],
+    "features": [],
+    "location": "California",
+    "category": "licenses",
+    "text": "Any business that sells tangible personal property subject to sales tax in California must obtain a Seller's Permit from the CDTFA. For restaurants and food businesses, most prepared food is taxable. The permit is free, but the business must collect and remit sales tax with quarterly or monthly filings. Failure to register and collect sales tax may result in penalties and back taxes.",
+    "requirements": [
+      "Online registration at CDTFA.ca.gov",
+      "Federal EIN",
+      "Bank account information",
+      "Quarterly/monthly sales tax filings"
+    ],
+    "fee": "Free",
+    "timeline": "Same day online"
+  },
+  {
+    "id": "ladph-food-handler",
+    "title": "Food Handler Certification",
+    "agency": "LA County Department of Public Health",
+    "business_type": ["restaurant", "bakery", "food_truck"],
+    "features": [],
+    "location": "Los Angeles",
+    "category": "licenses",
+    "text": "All food handlers employed by a food facility in Los Angeles County must obtain a valid Food Handler Card within 30 days of hire. The card is obtained by passing an accredited food safety course. At least one supervisor or manager at each food facility must hold a valid California Food Manager Certification (ServSafe or equivalent). Cards must be renewed every three years.",
+    "requirements": [
+      "Complete accredited food handler training",
+      "Pass food safety exam",
+      "At least one certified Food Safety Manager on staff",
+      "Renewal every 3 years"
+    ],
+    "fee": "$15–$25 per card",
+    "timeline": "Same day upon passing exam"
+  },
+  {
+    "id": "cslb-contractors-license",
+    "title": "Contractor's License — CSLB",
+    "agency": "California Contractors State License Board",
+    "business_type": ["contractor"],
+    "features": [],
+    "location": "California",
+    "category": "licenses",
+    "text": "Any person or business that contracts or bids on construction projects in California with a value of $500 or more in combined labor and materials must be licensed by the Contractors State License Board (CSLB). Applications require proof of experience, passing a written examination, fingerprinting, and carrying workers' compensation insurance if there are employees. A surety bond is also required. Performing contracting work without a license is a misdemeanor.",
+    "requirements": [
+      "4 years of journeyman-level experience",
+      "Pass written examination",
+      "Live scan fingerprinting",
+      "Surety bond ($15,000)",
+      "Workers compensation insurance (if employing workers)"
+    ],
+    "fee": "$450 initial application",
+    "timeline": "3–6 months"
+  },
+  {
+    "id": "cosmetology-barbershop-license",
+    "title": "Cosmetology or Barbershop License",
+    "agency": "California Board of Barbering and Cosmetology",
+    "business_type": ["salon"],
+    "features": [],
+    "location": "California",
+    "category": "licenses",
+    "text": "Every salon, barbershop, and cosmetology establishment in California must be licensed by the Board of Barbering and Cosmetology. Individual cosmetologists, barbers, estheticians, and nail technicians must also hold valid individual licenses. Establishment licenses require passing an inspection verifying proper sanitation equipment, adequate ventilation, and appropriate facilities. All licenses must be renewed biennially.",
+    "requirements": [
+      "Establishment license application",
+      "Pass premises inspection",
+      "All practitioners hold valid individual licenses",
+      "Biennial renewal"
+    ],
+    "fee": "$50 establishment license",
+    "timeline": "2–4 weeks after inspection"
+  },
+  {
+    "id": "la-signage-permit",
+    "title": "Sign Permit",
+    "agency": "LA Department of Building and Safety",
+    "business_type": ["restaurant", "retail", "salon", "bar", "bakery"],
+    "features": ["signage"],
+    "location": "Los Angeles",
+    "category": "permits",
+    "text": "A sign permit is required from LADBS before installing any exterior sign, awning, or illuminated display. The sign must comply with the LA Sign Ordinance, which limits sign area, height, and illumination type. Historic districts and certain commercial corridors have additional restrictions. Neon and LED signs require electrical permits. The permit application requires a sign design drawing with dimensions and materials.",
+    "requirements": [
+      "Sign design drawing with dimensions",
+      "Electrical permit for illuminated signs",
+      "Compliance with LA Sign Ordinance",
+      "Historic district review (if applicable)"
+    ],
+    "fee": "$100–$500 depending on sign type",
+    "timeline": "2–4 weeks"
+  },
+  {
+    "id": "lamc-entertainment-permit",
+    "title": "Entertainment Permit",
+    "agency": "City of Los Angeles Police Department",
+    "business_type": ["bar", "restaurant"],
+    "features": ["live_entertainment"],
+    "location": "Los Angeles",
+    "category": "permits",
+    "text": "An Entertainment Permit from the LAPD is required for any establishment that provides live entertainment, dancing, or amplified music to the public. The permit application involves a background check, fire safety review, and community notification. Conditions may be imposed regarding hours of operation, sound levels, security personnel requirements, and occupancy. Annual renewal is required.",
+    "requirements": [
+      "LAPD entertainment permit application",
+      "Background check for all principals",
+      "Fire safety approval",
+      "Community notification",
+      "Annual renewal"
+    ],
+    "fee": "$449 initial",
+    "timeline": "60–90 days"
+  },
+  {
+    "id": "edd-employer-registration",
+    "title": "EDD Employer Registration — Payroll Taxes",
+    "agency": "California Employment Development Department",
+    "business_type": ["restaurant", "salon", "retail", "contractor", "bakery", "bar"],
+    "features": ["employees"],
+    "location": "California",
+    "category": "licenses",
+    "text": "Any business that pays wages to one or more employees in California must register with the California Employment Development Department (EDD) within 15 days of paying wages exceeding $100 in a quarter. Employers are required to withhold and remit state income taxes, State Disability Insurance (SDI), and Unemployment Insurance (UI) contributions. Employers must also display required workplace posters and provide employees with written notice of their rights.",
+    "requirements": [
+      "Register with EDD within 15 days of first payroll",
+      "Withhold and remit state payroll taxes quarterly",
+      "Post required workplace notices",
+      "Provide new employee forms (W-4, I-9)"
+    ],
+    "fee": "Free to register",
+    "timeline": "Same day online"
+  },
+  {
+    "id": "sba-ein",
+    "title": "Federal Employer Identification Number (EIN)",
+    "agency": "Internal Revenue Service / U.S. Small Business Administration",
+    "business_type": ["restaurant", "salon", "retail", "contractor", "bakery", "bar", "food_truck"],
+    "features": [],
+    "location": "United States",
+    "category": "licenses",
+    "text": "A Federal Employer Identification Number (EIN) is required for any business entity other than a sole proprietorship with no employees. Even sole proprietors may need an EIN to open a business bank account or apply for business licenses. The EIN is issued by the IRS and is used for tax filings, business licensing, and financial accounts. Application is free and available online at IRS.gov.",
+    "requirements": [
+      "Online application at IRS.gov",
+      "Social Security Number or ITIN of responsible party",
+      "Business entity type and address"
+    ],
+    "fee": "Free",
+    "timeline": "Immediate online"
+  },
+  {
+    "id": "ladbs-building-permit",
+    "title": "Building Permit — Tenant Improvement",
+    "agency": "LA Department of Building and Safety",
+    "business_type": ["restaurant", "retail", "salon", "bar", "bakery"],
+    "features": ["construction"],
+    "location": "Los Angeles",
+    "category": "permits",
+    "text": "A building permit is required for any structural alteration, tenant improvement, or change in occupancy classification. Permit applications must include architectural drawings stamped by a licensed architect or engineer, a project description, and a cost estimate. LADBS plan check reviews the drawings for compliance with the LA Building Code, zoning regulations, and accessibility requirements. Inspections are required at key milestones. No work may begin until permits are issued.",
+    "requirements": [
+      "Architectural or engineering drawings (stamped)",
+      "Plan check review and approval",
+      "No work before permit issuance",
+      "Inspections at framing, rough MEP, and final stages"
+    ],
+    "fee": "$200–$2,000+ depending on project value",
+    "timeline": "4–8 weeks for plan check; expedited available"
+  },
+  {
+    "id": "mhc-food-truck-permit",
+    "title": "Mobile Food Facility Permit",
+    "agency": "LA County Department of Public Health — Environmental Health",
+    "business_type": ["food_truck"],
+    "features": [],
+    "location": "Los Angeles",
+    "category": "permits",
+    "text": "A Mobile Food Facility (MFF) permit is required for any food truck, cart, or mobile kitchen operating in Los Angeles County. The vehicle must pass an initial inspection verifying proper food storage, temperature control equipment, handwashing facilities, and waste disposal. The truck must operate from a commissary kitchen that holds a valid health permit. The permit must be renewed annually.",
+    "requirements": [
+      "Vehicle inspection by Environmental Health",
+      "Commissary agreement with a licensed commissary kitchen",
+      "Proper food storage and temperature control equipment",
+      "Annual renewal"
+    ],
+    "fee": "$500–$800",
+    "timeline": "3–6 weeks"
+  },
+  {
+    "id": "ladot-food-truck-vending",
+    "title": "Food Truck Vending Permit",
+    "agency": "City of Los Angeles Department of Transportation",
+    "business_type": ["food_truck"],
+    "features": [],
+    "location": "Los Angeles",
+    "category": "permits",
+    "text": "Food trucks operating on public streets in the City of Los Angeles must obtain a Sidewalk Vending Permit from the city. Trucks must comply with vending zone restrictions, including prohibition within 500 feet of a school during school hours and within 100 feet of a fire hydrant. Trucks may not vend within 100 feet of a brick-and-mortar restaurant selling the same type of food without the restaurant's consent.",
+    "requirements": [
+      "Sidewalk Vending Permit application",
+      "Proof of health permit",
+      "Compliance with location restrictions",
+      "Vehicle registration and insurance"
+    ],
+    "fee": "$291 annually",
+    "timeline": "2–4 weeks"
+  },
+  {
+    "id": "home-occupation-permit",
+    "title": "Home Occupation Permit",
+    "agency": "LA Department of City Planning",
+    "business_type": ["bakery", "contractor", "retail"],
+    "features": ["home_based"],
+    "location": "Los Angeles",
+    "category": "zoning",
+    "text": "A Home Occupation Permit is required to legally operate a business from a residential dwelling in Los Angeles. The permit ensures the business does not change the residential character of the neighborhood. Conditions typically include: no employees working at the home, no customer visits to the residence, no outdoor storage of commercial equipment, and the business activity must be incidental to the residential use. Home-based food businesses (cottage food) may be subject to additional state regulations.",
+    "requirements": [
+      "Home Occupation Permit application",
+      "No external evidence of business activity",
+      "No non-resident employees working from home",
+      "Cottage food permit (for food businesses)",
+      "Annual renewal"
+    ],
+    "fee": "$50–$100",
+    "timeline": "2–3 weeks"
+  }
+]
