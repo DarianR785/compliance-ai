@@ -145,9 +145,9 @@ export default function ResultsPage() {
       <Navbar />
 
       {result.mock && (
-        <div className="bg-[var(--pending)]/10 border-b border-[var(--pending)]/30 px-6 py-2 no-print">
-          <p className="mono-label text-[10px] text-[var(--pending)] text-center">
-            [DEMO DATA] — FastAPI backend not connected. Start with: <code>uvicorn app:app --reload</code>
+        <div className="bg-[var(--required)]/10 border-b border-[var(--required)]/30 px-6 py-2 no-print">
+          <p className="mono-label text-[10px] text-[var(--required)] text-center">
+            [DEMO DATA] — Tavily search unavailable. Check that TAVILY_API_KEY is set and redeploy.
           </p>
         </div>
       )}
