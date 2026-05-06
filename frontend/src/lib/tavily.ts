@@ -40,11 +40,12 @@ export async function searchRegulations(
   if (!apiKey) throw new Error("TAVILY_API_KEY not set");
 
   const client = tavily({ apiKey });
-  const query = `required permits licenses ${businessType} ${topic} ${location}`;
+  // Include full description so retrieval targets the specific business (e.g. alcohol, outdoor, live music)
+  const query = `required permits licenses regulations ${businessType} Los Angeles ${location} ${topic}`;
 
   const raw = await client.search(query, {
     searchDepth: "advanced",
-    maxResults: 5,
+    maxResults: 8,
     includeAnswer: true,
     includeDomains: COMPLIANCE_DOMAINS,
   });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchRegulations } from "@/lib/tavily";
-import { getRegulations } from "@/lib/regulations";
+import { extractPermitsWithClaude } from "@/lib/gemini";
 import { MOCK_RESPONSE } from "@/lib/mock-data";
 
 export async function POST(request: NextRequest) {
@@ -14,17 +14,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Description is required" }, { status: 400 });
   }
 
-  if (!process.env.TAVILY_API_KEY) {
-    console.warn("[analyze] TAVILY_API_KEY not set — returning mock");
+  if (!process.env.TAVILY_API_KEY || !process.env.GEMINI_API_KEY) {
+    console.warn("[analyze] Missing API keys — returning mock");
     return NextResponse.json({ ...MOCK_RESPONSE, mock: true });
   }
 
   try {
     const tavilyResp = await searchRegulations(description, business_type, location);
-
-    const checklist = business_type
-      ? getRegulations(business_type, [], tavilyResp.results)
-      : [];
 
     const sources = tavilyResp.results.map((r) => ({
       title: r.title,
@@ -32,6 +28,13 @@ export async function POST(request: NextRequest) {
       score: r.score,
       url: r.url,
     }));
+
+    const checklist = await extractPermitsWithClaude(
+      description,
+      business_type,
+      location,
+      tavilyResp.results,
+    );
 
     if (!checklist.length && !tavilyResp.summary) {
       return NextResponse.json({ ...MOCK_RESPONSE, mock: true });
