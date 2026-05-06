@@ -1,21 +1,5 @@
 import { tavily } from "@tavily/core";
 
-const COMPLIANCE_DOMAINS = [
-  "lacity.gov",
-  "lacdph.lacounty.gov",
-  "lacounty.gov",
-  "abc.ca.gov",
-  "cdtfa.ca.gov",
-  "dir.ca.gov",
-  "cslb.ca.gov",
-  "cdph.ca.gov",
-  "irs.gov",
-  "sba.gov",
-  "ladbs.org",
-  "planning.lacity.org",
-  "business.lacity.gov",
-  "fire.lacity.org",
-];
 
 export interface TavilyResult {
   title: string;
@@ -45,9 +29,8 @@ export async function searchRegulations(
 
   const raw = await client.search(query, {
     searchDepth: "advanced",
-    maxResults: 8,
+    maxResults: 10,
     includeAnswer: true,
-    includeDomains: COMPLIANCE_DOMAINS,
   });
 
   const results: TavilyResult[] = (raw.results ?? []).map((r) => ({
